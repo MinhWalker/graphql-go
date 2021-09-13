@@ -1,8 +1,10 @@
 package main
 
 import (
-	"graphQL-go/graph"
+	"github.com/go-pg/pg/v10"
 	"graphQL-go/graph/generated"
+	"graphQL-go/graph/resolver"
+	"graphQL-go/postgres"
 	"log"
 	"net/http"
 	"os"
@@ -14,12 +16,25 @@ import (
 const defaultPort = "8080"
 
 func main() {
+	DB := postgres.New(&pg.Options{
+		User:     "postgres",
+		Password: "1234",
+		Database: "meetup_dev",
+	})
+
+	defer DB.Close()
+
+	DB.AddQueryHook(postgres.DBLogger{})
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
 	}
 
-	c := generated.Config{Resolvers: &graph.Resolver{}}
+	c := generated.Config{Resolvers: &resolver.Resolver{
+		MeetupsRepo: postgres.MeetupsRepo{DB: DB},
+		UsersRepo:   postgres.UsersRepo{DB: DB},
+	}}
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(c))
 
