@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/go-pg/pg/v10"
+	"graphQL-go/dataloader"
 	"graphQL-go/graph/generated"
 	"graphQL-go/graph/resolver"
 	"graphQL-go/postgres"
@@ -39,7 +40,7 @@ func main() {
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(c))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	http.Handle("/query", dataloader.DataloaderMiddleware(DB, srv))
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
